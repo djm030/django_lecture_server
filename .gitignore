@@ -511,7 +511,7 @@ cython_debug/
 #.idea/
 
 secrect.json
-*/migrations/
+*/migrations/*
 !*/migrations/__init__.py
 staticfiles
 
