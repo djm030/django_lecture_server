@@ -512,6 +512,7 @@ cython_debug/
 
 secrect.json
 */migrations/
+!*/migrations/__init__.py
 staticfiles
 
 
