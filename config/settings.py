@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "cart.apps.CartConfig",
     "reviews.apps.ReviewsConfig",
     "watchedlectures.apps.WatchedlecturesConfig",
+    "images.apps.ImagesConfig",
 
     # Third-party apps
     "corsheaders",
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "drf_yasg",
+    'storages',
 ]
 SITE_ID = 1
 MIDDLEWARE = [
@@ -47,7 +49,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware", ## 개발 동안에만 허가
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -151,6 +153,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://crazyform.store",
     "https://www.crazyform.shop",
     "https://crazyform.shop",
+    "https://warm-cat-6770f3.netlify.app",
+    "https://inspiring-raindrop-c0fb11.netlify.app",
     
     
 ]
@@ -163,7 +167,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://crazyform.store",
     "https://www.crazyform.shop",
     "https://crazyform.shop",
-    
+    "https://warm-cat-6770f3.netlify.app/",
+    "https://inspiring-raindrop-c0fb11.netlify.app",
 ]
 
 
@@ -185,7 +190,6 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 DEFAULT_FROM_MAIL = EMAIL_HOST_USER
-
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 
 # S3 storage settings
@@ -195,6 +199,8 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = "lecture-site-video"
 AWS_S3_REGION_NAME = "ap-northeast-2"
 AWS_S3_ENDPOINT_URL = "https://kr.object.ncloudstorage.com"
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
 
 # JWT settings
 REST_USE_JWT = True
@@ -216,3 +222,24 @@ SIMPLE_JWT = {
     "TOKEN_TYPE_CLAIM": "token_type",
     "JTI_CLAIM": "jti",
 }
+
+
+
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+sentry_sdk.init(
+    dsn="https://e65e2c87eb934284ba8d85a5c5701eb4@o4504970462625792.ingest.sentry.io/4504970471735296",
+    integrations=[
+        DjangoIntegration(),
+    ],
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True
+)
