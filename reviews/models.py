@@ -3,15 +3,6 @@ from common.models import CommonModel
 from lectures.models import Lecture
 from users.models import User
 
-# Create your models here.
-"""
-작성자 (Author)
-강의명 (Course)
-교수명 (Professor)
-평점 (Rating)
-내용 (Content)
-
-"""
 
 
 class Review(CommonModel):

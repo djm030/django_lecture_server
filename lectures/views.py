@@ -78,7 +78,7 @@ class LecturesDetail(APIView):
         except:
             pass
         video_serializer = VideoListSerializer(video_list, many=True)
-        serializer = serializers.LectureSerializer(lecture)
+        serializer = serializers.LectureSerializer(lecture, context={"request": request})
         return Response(
             {
                 "lecture_data": serializer.data,

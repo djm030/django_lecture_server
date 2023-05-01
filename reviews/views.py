@@ -11,7 +11,7 @@ from .serializers import (
 )
 from rest_framework.exceptions import ParseError, NotFound
 from lectures.models import Lecture
-
+from rest_framework import status
 
 class UserNameReview(APIView):
     def get(self, request, username):
@@ -71,3 +71,73 @@ class ReplyView(APIView):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class ReviewDetailView(APIView):
+    def get(self, request, lectureId, reviewId):
+        try:
+            review = Review.objects.get(id=reviewId, lecture__LectureId=lectureId)
+        except Review.DoesNotExist:
+            raise NotFound
+
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data)
+    def put(self, request, lectureId, reviewId):
+        user = request.user
+        try:
+            review = Review.objects.get(id=reviewId, lecture__LectureId=lectureId, user=user)
+        except Review.DoesNotExist:
+            raise NotFound
+
+        serializer = ReviewMakeSerializer(review, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+    def delete(self, request, lectureId, reviewId):
+        user = request.user
+        try:
+            review = Review.objects.get(id=reviewId, lecture__LectureId=lectureId, user=user)
+        except Review.DoesNotExist:
+            raise NotFound
+
+        review.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ReplyDetailView(APIView):
+    def get(self, request, lectureId, reviewId, replyId):
+        try:
+            reply = Reply.objects.get(id=replyId, review__id=reviewId)
+        except Reply.DoesNotExist:
+            raise NotFound
+
+        serializer = ReplySerializer(reply)
+        return Response(serializer.data)
+    def put(self, request, lectureId, reviewId, replyId):
+        user = request.user
+        try:
+            reply = Reply.objects.get(id=replyId, review__id=reviewId, user=user)
+        except Reply.DoesNotExist:
+            raise NotFound
+
+        serializer = ReplymakeSerializer(reply, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+    def delete(self, request, lectureId, reviewId, replyId):
+        user = request.user
+        try:
+            reply = Reply.objects.get(id=replyId, review__id=reviewId, user=user)
+        except Reply.DoesNotExist:
+            raise NotFound
+
+        reply.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
