@@ -51,6 +51,7 @@ urlpatterns = [
     path("api/v1/cart/", include("cart.urls")),
     path("api/v1/watchedlectures/", include("watchedlectures.urls")),
     path("api/v1/images/", include("images.urls")),
+    path("api/v1/admins/", include("admins.urls"))
     # path("api/v1/ledetaile/", include("ledetailes.urls")),
     # path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     # path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

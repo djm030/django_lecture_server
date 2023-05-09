@@ -16,6 +16,11 @@ urlpatterns = [
     path("@<str:username>", views.UsernameView.as_view()),
     path("jwttoken", views.JWTokenView.as_view()),
     path("instructor", views.AddInstructor.as_view()),
+    path("teachers/<str:teacher>", views.PublicTeacher.as_view()),
+    # kakaologin
+    path("login/kakao", views.KakaoLogIn.as_view()),
+    # naverlogin
+    path("login/naver", views.NaverLogIn.as_view()),
     path(
         "calculated-lectures/<int:lectureId>/", views.AddCalculateLecturesView.as_view()
     ),
@@ -29,6 +34,7 @@ urlpatterns = [
         "jwt-token-auth/verify/", TokenVerifyView.as_view(), name="token_verify"
     ),  # 유저인증
     path("test", views.UsertempProfileView.as_view()),  ## 테스트용
+#     path("profiletest",views.profileTestAPI.as_view()),
 ]
 ################################
 # url list

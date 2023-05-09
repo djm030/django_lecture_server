@@ -1,16 +1,22 @@
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
+from django.conf import settings
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, get_object_or_404
+
+from rest_framework import status, exceptions, permissions
 from rest_framework.exceptions import ParseError, NotFound
 from rest_framework.permissions import IsAuthenticated
-from django.conf import settings
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer,
+    TokenRefreshSerializer,
+)
+
 from . import serializers
 from .models import User, Activite
 import jwt
-from rest_framework import status, exceptions, permissions
-from django.contrib.auth import authenticate, login, logout
-from lectures.models import Lecture, CalculatedLecture
-
+import requests
 
 # 유저 프로필 관련 view
 class UserProfileView(APIView):
@@ -35,6 +41,11 @@ class UserProfileView(APIView):
 
     def put(self, request):
         user = request.user
+        print(request.data["avatar"])
+        imagefile = request.FILES.get("avatar")
+        print(imagefile)
+        
+        
         serializer = serializers.OneUserSerializer(
             user,
             data=request.data,
@@ -92,12 +103,13 @@ class UsernameView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, username):
-        username = User.objects.filter(username=username)
+        
+            username = User.objects.filter(username=username)
 
-        if username.exists():
-            return Response("중복된 아이디 입니다.", status=status.HTTP_200_OK)
-        else:
-            return Response("사용해도 좋습니다.", status=status.HTTP_200_OK)
+            if username.exists():
+                return Response("중복된 아이디 입니다.", status=status.HTTP_200_OK)
+            else:
+                return Response("사용해도 좋습니다.", status=status.HTTP_200_OK)
 
 
 ## 이메일 인증
@@ -238,6 +250,8 @@ from watchedlectures.models import WatchedLecture
 
 # 유저 프로필 관련 view
 class UsertempProfileView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
     def get(self, request):
         user = User.objects.get(memberId=request.user.memberId)
         serializer = serializers.OneUserSerializer(user)
@@ -265,6 +279,7 @@ class UsertempProfileView(APIView):
 
     def put(self, request):
         user = request.user
+        print(request.data)
         serializer = serializers.OneUserSerializer(
             user,
             data=request.data,
@@ -276,3 +291,171 @@ class UsertempProfileView(APIView):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+class PublicTeacher(APIView):
+    def get(self, request, teacher):
+        try:
+            print(teacher)
+            teacher_obj = User.objects.filter(name=teacher)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = serializers.AddInstructorSerializer(teacher_obj, many=True)
+        
+        return Response(serializer.data[0])
+
+
+
+class NaverLogIn(APIView):
+    def post(self, request):
+        try:
+            code = request.data.get("code")
+            client_id = "ofNjUGXrDlgmWpoZDx40"
+            client_secret = "9hQKv_fPpN"
+
+            # Get access token from code
+            token_request_url = "https://nid.naver.com/oauth2.0/token"
+            token_request_data = {
+                "grant_type": "authorization_code",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "code": code,
+                "state": "test",
+                "redirect_uri": "https://cmgg.store/social/naver",
+            }
+            print("noteroor")
+            token_response = requests.post(token_request_url, data=token_request_data)
+            token_data = token_response.json()
+            access_token = token_data.get("access_token")
+
+            # Get user info from access token
+            profile_request_url = "https://openapi.naver.com/v1/nid/me"
+            profile_response = requests.get(
+                profile_request_url,
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+            profile_data = profile_response.json()
+
+            # Get or create user
+            naver_account = profile_data.get("response")
+            print(naver_account)
+            user, created = User.objects.get_or_create(
+                username= naver_account.get("email"),
+                defaults={
+                    # "email" :naver_account.get("email"),
+                    "name": naver_account.get("name"),
+                    # "avatar": naver_account.get("profile_image"),
+                },
+            )
+
+            if created:
+                user.set_unusable_password()
+                user.save()
+
+            # Serialize user data
+            serializer = serializers.OneUserSerializer(user)
+
+            # Get JWT tokens
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+
+            data = {
+                "user": serializer.data,
+                "message": "login success",
+                "token": {
+                    "access": access_token,
+                    "refresh": refresh_token,
+                },
+            }
+            res = Response(data, status=status.HTTP_200_OK)
+
+            # Set JWT tokens in cookies
+            res.set_cookie("access", access_token, httponly=True)
+            res.set_cookie("refresh", refresh_token, httponly=True)
+
+            return res
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class KakaoLogIn(APIView):
+    def post(self, request):
+        try:
+            code = request.data.get("code")
+            
+            access_token = requests.post(
+                "https://kauth.kakao.com/oauth/token",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data={
+                    "grant_type": "authorization_code",
+                    "client_id": "0ee0a4111ed87512f2f0dfb62ebd7ae5",
+                    "redirect_uri": "https://cmgg.store/social/kakao",
+                    "code": code,
+                },
+            )
+            
+            access_token = access_token.json().get("access_token")
+            
+            user_data = requests.get(
+                "https://kapi.kakao.com/v2/user/me",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
+                },
+            )
+            user_data = user_data.json()
+            kakao_account = user_data.get("kakao_account")
+            profile = kakao_account.get("profile")
+            print({"user_data":user_data,"kakao_account":kakao_account,"profile":profile})
+            print(user_data.get("id"))
+
+            # Get or create user
+            user, created = User.objects.get_or_create(
+                username=user_data.get("id"),
+                     defaults={
+                    "email": kakao_account.get("email"),
+                    # "name": profile.get("nickname"),
+                        # "avatar": profile.get("profile_image_url"),
+                        },
+                    )
+            
+
+            if created:
+                user.set_unusable_password()
+                user.save()
+
+            # Serialize user data
+            serializer = serializers.UserSignUpSerializer(user)
+
+            # Get JWT tokens
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+
+            data = {
+                "user": serializer.data,
+                "message": "login success",
+                "token": {
+                    "access": access_token,
+                    "refresh": refresh_token,
+                },
+            }
+            res = Response(data, status=status.HTTP_200_OK)
+
+            # Set JWT tokens in cookies
+            res.set_cookie("access", access_token, httponly=True)
+            res.set_cookie("refresh", refresh_token, httponly=True)
+
+            return res
+
+        except Exception as e:
+            print(e)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        
+class profileTestAPI(APIView):
+   def put(self, request):
+       print(request.data)
+       return Response(status=status.HTTP_200_OK)

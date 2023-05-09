@@ -38,4 +38,4 @@ class UserAdmin(UserAdmin):
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
-    list_display = ("username", "name", "is_staff")
+    list_display = ("username", "name", "is_staff","isInstructor")

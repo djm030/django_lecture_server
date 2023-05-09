@@ -1,30 +1,38 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
-from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import NotFound
+from rest_framework import status
+
 from .models import numCart
-from users.models import User
-from . import serializers
-from rest_framework import permissions
+from lectures.models import Lecture
+from .serializers import CartSerializer
+from lectures.serializers import LectureSerializer
 
 
 class CartView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        all_numCart = numCart.objects.all()
-        serializer = serializers.CartSerializer(all_numCart, many=True)
+        carts = numCart.objects.filter(user=request.user)
+        serializer = CartSerializer(
+            carts,
+            many=True,
+            context={"request": request},
+        )
         return Response(serializer.data)
 
     def put(self, request):
-        user = request.user
-        serializer = serializers.CartSerializer(
-            user,
-            data=request.data,
-            partial=True,
-            # isInstructor =true 보내주기 요청
-        )
-        if serializer.is_valid():
-            user = serializer.save()
-            serializer = serializers.CartSerializer(user)
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors)
+        cart = numCart.objects.get(user=request.user)
+        lectures = request.data.get("lectures", [])
+        
+        for lecture_id in lectures:
+            lecture = get_object_or_404(Lecture, pk=lecture_id)
+            if lecture not in cart.lecture.all():
+                cart.lecture.add(lecture)
+            else:
+                cart.lecture.remove(lecture)
+        serializer = CartSerializer(cart)
+        return Response(serializer.data)
+

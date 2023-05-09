@@ -3,11 +3,11 @@ from common.models import CommonModel
 
 
 class numCart(CommonModel):
-    lecture = models.ForeignKey(
+    lecture = models.ManyToManyField(
         "lectures.Lecture",
-        on_delete=models.CASCADE,
+        
         related_name="cart",
-        null=True,
+        
     )
 
     user = models.OneToOneField(

@@ -46,14 +46,29 @@ class UserSignUpSerializer(ModelSerializer):
 # 강사 관련
 
 
+
 class InstructorSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = (
             "username",
-            "instructorField",
+            "name",
             "instructorAbout",
             "instructorCareer",
+            "dateBirth",
+            
+        )
+class AddInstructorSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "name",
+            "profileImg",
+            "instructorAbout",
+            "instructorCareer",
+            "dateBirth",
+            
         )
 
 
