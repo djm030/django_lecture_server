@@ -9,7 +9,7 @@ class LectureSerializer(serializers.ModelSerializer):
     from users.serializers import (
         InstructorSerializer,
     )
-    
+
     instructor = InstructorSerializer()
     categories = CategorySerializer()
     reviews = ReviewSerializer(many=True)
@@ -25,16 +25,17 @@ class LectureSerializer(serializers.ModelSerializer):
 
     def get_total_student(self, object):
         return object.total_student()
-    
+
     def to_representation(self, instance):
         reviews_queryset = instance.reviews.order_by("-id")
         reviews_serializer = ReviewSerializer(
-            reviews_queryset, many=True, context={"request": self.context.get("request")}
+            reviews_queryset,
+            many=True,
+            context={"request": self.context.get("request")},
         )
         ret = super().to_representation(instance)
         ret["reviews"] = reviews_serializer.data
         return ret
-        
 
     class Meta:
         model = Lecture
@@ -121,7 +122,6 @@ class AddLectureSerializer(serializers.ModelSerializer):
         fields = (
             "lectureTitle",
             "lectureDifficulty",
-            
             "lectureDescription",
             "lectureFee",
             "thumbnail",

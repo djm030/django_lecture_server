@@ -10,6 +10,9 @@ location /static/ {
         add_header Cache-Control "public, no-transform";
     }
 
+<!-- uwsgi = "^2.0.21" -->
+
+
 
 # 📌0. 일정 및 목표
 📅프로젝트 일정

@@ -3,7 +3,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from common.models import CommonModel
 from cart.models import numCart
-from lectures.models import CalculatedLecture
+from lectures.models import CalculatedLecture, Lecture
+from payments.models import Payment
 
 # 모델
 # UserId VARCHAR
@@ -121,16 +122,19 @@ class User(AbstractUser, Activite):
     )
 
     # 구매강의 영역
-    # ledetaile = models.ManyToManyField(
-    #     CalculatedLecture,
-    #     related_name="user",
-    #     null=True,
-    #     blank=True,
-    # )
+
     calculatedLecture = models.ManyToManyField(
         CalculatedLecture,
         related_name="user",
         blank=True,
+    )
+
+    last_lecture = models.OneToOneField(
+        Lecture,
+        on_delete=models.CASCADE,
+        related_name="user",
+        blank=True,
+        null=True,
     )
 
     # 제외 영역

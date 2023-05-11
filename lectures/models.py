@@ -111,6 +111,11 @@ class CalculatedLecture(CommonModel):
         on_delete=models.CASCADE,
         related_name="calculatedlecture",
     )
+    total_sales = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
 
     def lecture_title(self):
         return self.lecture.lectureTitle

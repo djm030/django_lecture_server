@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ENV_PATH = os.path.join(BASE_DIR, '.env')
+ENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(ENV_PATH)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -14,8 +14,8 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 # Application definition
-INSTALLED_APPS = [
-    # Django apps
+
+SYSTEM_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -23,8 +23,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-
-    # Custom apps
+]
+CUSTOM_APPS = [
     "users.apps.UsersConfig",
     "common.apps.CommonConfig",
     "lectures.apps.LecturesConfig",
@@ -35,23 +35,25 @@ INSTALLED_APPS = [
     "watchedlectures.apps.WatchedlecturesConfig",
     "images.apps.ImagesConfig",
     "admins.apps.AdminsConfig",
-    
-
-    # Third-party apps
+    "payments.apps.PaymentsConfig",
+]
+THIRD_PARTY_APPS = [
     "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "drf_yasg",
-    'storages',
+    "storages",
 ]
+
+INSTALLED_APPS = SYSTEM_APPS + CUSTOM_APPS + THIRD_PARTY_APPS
 SITE_ID = 1
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # "django.middleware.csrf.CsrfViewMiddleware", ## 개발 동안에만 허가
+    "django.middleware.csrf.CsrfViewMiddleware",  ## 개발 동안에만 허가
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -76,17 +78,24 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "lecturesite_db",
+#         "USER": "root",
+#         "PASSWORD": os.environ.get("DB_PASSWORD"),
+#         "HOST": "localhost",
+#         "PORT": "3306",
+#         "OPTIONS": {
+#             "charset": "utf8mb4",
+#         },
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "lecturesite_db",
-        "USER": "root",
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": "localhost",
-        "PORT": "3306",
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
 
@@ -113,8 +122,8 @@ USE_I18N = True
 USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -127,12 +136,12 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_ALL_HEADERS = True
 CORS_ALLOW_METHODS = [
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'OPTIONS',
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -157,8 +166,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://crazyform.shop",
     "https://warm-cat-6770f3.netlify.app",
     "https://inspiring-raindrop-c0fb11.netlify.app",
-    
-    
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -172,7 +179,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://warm-cat-6770f3.netlify.app/",
     "https://inspiring-raindrop-c0fb11.netlify.app",
 ]
-
 
 
 # JWT Authentication
@@ -226,7 +232,6 @@ SIMPLE_JWT = {
 }
 
 
-
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -235,17 +240,14 @@ sentry_sdk.init(
     integrations=[
         DjangoIntegration(),
     ],
-
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production.
     traces_sample_rate=1.0,
-
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=True
+    send_default_pii=True,
 )
-
 
 
 # LOGGING = {
