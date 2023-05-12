@@ -5,9 +5,7 @@ from common.models import CommonModel
 class numCart(CommonModel):
     lecture = models.ManyToManyField(
         "lectures.Lecture",
-        
         related_name="cart",
-        
     )
 
     user = models.OneToOneField(

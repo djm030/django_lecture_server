@@ -21,5 +21,8 @@ class Instructor_Application(CommonModel):
         blank=True,
         default="",
     )
-    image = models.ImageField(upload_to="images/",blank=True,
-        default="",)
+    image = models.ImageField(
+        upload_to="images/",
+        blank=True,
+        default="",
+    )

@@ -78,7 +78,9 @@ class LecturesDetail(APIView):
         except:
             pass
         video_serializer = VideoListSerializer(video_list, many=True)
-        serializer = serializers.LectureSerializer(lecture, context={"request": request})
+        serializer = serializers.LectureSerializer(
+            lecture, context={"request": request}
+        )
         return Response(
             {
                 "lecture_data": serializer.data,
@@ -330,12 +332,16 @@ class addLecture(APIView):
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
 from django.db.models import Min, Max
+
+
 class errortest(APIView):
     def get(self, request):
         lectures = Lecture.objects.all()
-        min_lecture_id = lectures.aggregate(Min('LectureId'))['LectureId__min']
-        max_lecture_id = lectures.aggregate(Max('LectureId'))['LectureId__max']
+        min_lecture_id = lectures.aggregate(Min("LectureId"))["LectureId__min"]
+        max_lecture_id = lectures.aggregate(Max("LectureId"))["LectureId__max"]
         for lecture_id in range(min_lecture_id, max_lecture_id):
             # Lecture 모델에서 LectureId에 해당하는 객체를 가져옵니다.
             lecture = Lecture.objects.get(LectureId=lecture_id)

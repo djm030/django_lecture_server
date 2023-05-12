@@ -16,11 +16,10 @@ class ReplySerializer(serializers.ModelSerializer):
         return obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_is_same_user(self, obj):
-        request = self.context.get('request')
-        
+        request = self.context.get("request")
+
         if request and request.user.is_authenticated:
             if obj.user.memberId == request.user.memberId:
-                
                 return True
             else:
                 return False
@@ -45,14 +44,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         return obj.created_at.strftime("%Y-%m-%d %H:%M:%S")
 
     def get_is_same_user(self, obj):
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request and request.user.is_authenticated:
             if obj.user.memberId == request.user.memberId:
-                
                 return True
             else:
                 return False
         return False
+
     class Meta:
         model = Review
         exclude = (
@@ -60,7 +59,6 @@ class ReviewSerializer(serializers.ModelSerializer):
             "lecture",
         )
 
-        
 
 class ReviewMakeSerializer(serializers.ModelSerializer):
     class Meta:

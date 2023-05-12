@@ -13,27 +13,33 @@ import boto3
 import os
 from images.models import Image as ImageModel
 
+
 def base64_to_uploaded_file(base64_string, file_name):
     decoded_image = base64.b64decode(base64_string)
     image = Image.open(io.BytesIO(decoded_image))
     buffer = io.BytesIO()
-    image.save(buffer, format='PNG')
+    image.save(buffer, format="PNG")
     buffer.seek(0)
-    return InMemoryUploadedFile(buffer, None, file_name, 'image/png', buffer.tell(), None)
+    return InMemoryUploadedFile(
+        buffer, None, file_name, "image/png", buffer.tell(), None
+    )
+
 
 class UploadImageView(APIView):
     def post(self, request):
         user = request.user
-        
-        image_data = request.data.get('file')
+
+        image_data = request.data.get("file")
         if not image_data:
-            return Response({"error": "File not provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        image_data = image_data.split(',')[1]
-        
-        file_name = 'uploaded_image.png'
+            return Response(
+                {"error": "File not provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        image_data = image_data.split(",")[1]
+
+        file_name = "uploaded_image.png"
         file = base64_to_uploaded_file(image_data, file_name)
-        
+
         if file:
             s3 = boto3.client(
                 "s3",
@@ -43,7 +49,7 @@ class UploadImageView(APIView):
             file_name = default_storage.save(file.name, file)
             file_path = os.path.join(default_storage.location, file_name)
 
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 f.write(buffer.getbuffer())
 
             bucket_name = settings.AWS_STORAGE_BUCKET_NAME
@@ -55,5 +61,7 @@ class UploadImageView(APIView):
             image_instance.save()
 
             return Response({"image_url": image_url}, status=status.HTTP_201_CREATED)
-        
-        return Response({"error": "File not provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {"error": "File not provided"}, status=status.HTTP_400_BAD_REQUEST
+        )

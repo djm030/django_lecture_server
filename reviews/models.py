@@ -4,7 +4,6 @@ from lectures.models import Lecture
 from users.models import User
 
 
-
 class Review(CommonModel):
     user = models.ForeignKey(
         User,
@@ -34,7 +33,6 @@ class Review(CommonModel):
 
 
 class Reply(CommonModel):
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

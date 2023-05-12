@@ -11,34 +11,36 @@ from images.models import Image
 
 from rest_framework.parsers import MultiPartParser, FormParser
 
+
 class InstructorApplicationCreateWithImageAPIView(APIView):
     def post(self, request):
-        
         user = request.user
 
         if not user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         # Instructor application creation
-        description = request.data.get('introduce', '')
-        career = request.data.get('applicationField', '')
+        description = request.data.get("introduce", "")
+        career = request.data.get("applicationField", "")
         # Image upload
         imagefile = request.FILES.get("image")
-        
-        instructor_application = Instructor_Application(user=user, description=description, career=career, image=imagefile)
+
+        instructor_application = Instructor_Application(
+            user=user, description=description, career=career, image=imagefile
+        )
         print(instructor_application)
 
         # If imagefile is present, update the image attribute of the instructor_application instance
         if imagefile:
-            
             instructor_application.image = imagefile
-            
+
             instructor_application.save()
 
         return Response(
             {"detail": "신청서가 성공적으로 생성되었습니다."}, status=status.HTTP_201_CREATED
         )
-        
+
+
 class InstructorApplicationListAPIView(APIView):
     def get(self, request):
         user = request.user
@@ -52,11 +54,11 @@ class InstructorApplicationListAPIView(APIView):
         serializer = InstructorApplicationSerializer(instructor_applications, many=True)
         return Response(serializer.data)
 
+
 from rest_framework.generics import ListCreateAPIView
 
+
 class InstructorApplicationApprovalAPIView(APIView):
-    
-    
     def post(self, request):
         print(request.data)
         user = request.user
@@ -71,31 +73,41 @@ class InstructorApplicationApprovalAPIView(APIView):
         for application_data in applications:
             # application_id를 사용하여 신청서를 찾습니다
             # print(id=application_data['id'])
-            application = get_object_or_404(Instructor_Application, pk=application_data['id'])
-                                                   
+            application = get_object_or_404(
+                Instructor_Application, pk=application_data["id"]
+            )
+
             is_done = application_data.get("isDone", None)
             # null 값은 별일 없음
             if is_done is None:
                 continue
             elif is_done:
                 # 강사 모델 생성 및 유저의 isInstructor를 True로 변경
-                
+
                 application.user.isInstructor = True
                 application.user.save()
-                print({1:application.user.instructorAbout,2:application.user.instructorCareer})
+                print(
+                    {
+                        1: application.user.instructorAbout,
+                        2: application.user.instructorCareer,
+                    }
+                )
 
                 # 강사 프로필 업데이트
                 application.user.instructorAbout = application.description
                 application.user.save()
                 print(application.user.instructorAbout)
-                
+
                 application.user.instructorCareer = application.career
                 application.user.save()
-                print({1:application.user.instructorAbout,2:application.user.instructorCareer})
+                print(
+                    {
+                        1: application.user.instructorAbout,
+                        2: application.user.instructorCareer,
+                    }
+                )
 
-                
                 application.delete()
-
 
             else:  # is_done이 False일 때
                 application.delete()

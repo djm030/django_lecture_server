@@ -34,7 +34,7 @@ urlpatterns = [
         "jwt-token-auth/verify/", TokenVerifyView.as_view(), name="token_verify"
     ),  # 유저인증
     path("test", views.UsertempProfileView.as_view()),  ## 테스트용
-#     path("profiletest",views.profileTestAPI.as_view()),
+    #     path("profiletest",views.profileTestAPI.as_view()),
 ]
 ################################
 # url list
