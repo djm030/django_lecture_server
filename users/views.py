@@ -18,6 +18,7 @@ from .models import User, Activite
 import jwt
 import requests
 
+
 # 유저 프로필 관련 view
 class UserProfileView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -44,8 +45,7 @@ class UserProfileView(APIView):
         print(request.data["avatar"])
         imagefile = request.FILES.get("avatar")
         print(imagefile)
-        
-        
+
         serializer = serializers.OneUserSerializer(
             user,
             data=request.data,
@@ -103,13 +103,12 @@ class UsernameView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, username):
-        
-            username = User.objects.filter(username=username)
+        username = User.objects.filter(username=username)
 
-            if username.exists():
-                return Response("중복된 아이디 입니다.", status=status.HTTP_200_OK)
-            else:
-                return Response("사용해도 좋습니다.", status=status.HTTP_200_OK)
+        if username.exists():
+            return Response("중복된 아이디 입니다.", status=status.HTTP_200_OK)
+        else:
+            return Response("사용해도 좋습니다.", status=status.HTTP_200_OK)
 
 
 ## 이메일 인증
@@ -251,7 +250,7 @@ from watchedlectures.models import WatchedLecture
 # 유저 프로필 관련 view
 class UsertempProfileView(APIView):
     permission_classes = [permissions.AllowAny]
-    
+
     def get(self, request):
         user = User.objects.get(memberId=request.user.memberId)
         serializer = serializers.OneUserSerializer(user)
@@ -292,6 +291,7 @@ class UsertempProfileView(APIView):
         else:
             return Response(serializer.errors)
 
+
 class PublicTeacher(APIView):
     def get(self, request, teacher):
         try:
@@ -299,11 +299,10 @@ class PublicTeacher(APIView):
             teacher_obj = User.objects.filter(name=teacher)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        
-        serializer = serializers.AddInstructorSerializer(teacher_obj, many=True)
-        
-        return Response(serializer.data[0])
 
+        serializer = serializers.AddInstructorSerializer(teacher_obj, many=True)
+
+        return Response(serializer.data[0])
 
 
 class NaverLogIn(APIView):
@@ -340,7 +339,7 @@ class NaverLogIn(APIView):
             naver_account = profile_data.get("response")
             print(naver_account)
             user, created = User.objects.get_or_create(
-                username= naver_account.get("email"),
+                username=naver_account.get("email"),
                 defaults={
                     # "email" :naver_account.get("email"),
                     "name": naver_account.get("name"),
@@ -379,12 +378,11 @@ class NaverLogIn(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class KakaoLogIn(APIView):
     def post(self, request):
         try:
             code = request.data.get("code")
-            
+
             access_token = requests.post(
                 "https://kauth.kakao.com/oauth/token",
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -395,9 +393,9 @@ class KakaoLogIn(APIView):
                     "code": code,
                 },
             )
-            
+
             access_token = access_token.json().get("access_token")
-            
+
             user_data = requests.get(
                 "https://kapi.kakao.com/v2/user/me",
                 headers={
@@ -408,19 +406,24 @@ class KakaoLogIn(APIView):
             user_data = user_data.json()
             kakao_account = user_data.get("kakao_account")
             profile = kakao_account.get("profile")
-            print({"user_data":user_data,"kakao_account":kakao_account,"profile":profile})
+            print(
+                {
+                    "user_data": user_data,
+                    "kakao_account": kakao_account,
+                    "profile": profile,
+                }
+            )
             print(user_data.get("id"))
 
             # Get or create user
             user, created = User.objects.get_or_create(
                 username=user_data.get("id"),
-                     defaults={
+                defaults={
                     "email": kakao_account.get("email"),
                     # "name": profile.get("nickname"),
-                        # "avatar": profile.get("profile_image_url"),
-                        },
-                    )
-            
+                    # "avatar": profile.get("profile_image_url"),
+                },
+            )
 
             if created:
                 user.set_unusable_password()
@@ -453,9 +456,9 @@ class KakaoLogIn(APIView):
         except Exception as e:
             print(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        
-        
+
+
 class profileTestAPI(APIView):
-   def put(self, request):
-       print(request.data)
-       return Response(status=status.HTTP_200_OK)
+    def put(self, request):
+        print(request.data)
+        return Response(status=status.HTTP_200_OK)

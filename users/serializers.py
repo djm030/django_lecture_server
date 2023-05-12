@@ -1,7 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from .models import User
 from rest_framework import serializers
-from watchedlectures.serializers import WatchedLectureSerializer
 
 
 # 프로필 관련 serializer
@@ -46,7 +45,6 @@ class UserSignUpSerializer(ModelSerializer):
 # 강사 관련
 
 
-
 class InstructorSerializer(ModelSerializer):
     class Meta:
         model = User
@@ -56,8 +54,9 @@ class InstructorSerializer(ModelSerializer):
             "instructorAbout",
             "instructorCareer",
             "dateBirth",
-            
         )
+
+
 class AddInstructorSerializer(ModelSerializer):
     class Meta:
         model = User
@@ -68,7 +67,6 @@ class AddInstructorSerializer(ModelSerializer):
             "instructorAbout",
             "instructorCareer",
             "dateBirth",
-            
         )
 
 

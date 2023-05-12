@@ -4,7 +4,6 @@ from lectures.models import Lecture
 from users.models import User
 
 
-
 class Review(CommonModel):
     user = models.ForeignKey(
         User,

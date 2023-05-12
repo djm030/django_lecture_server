@@ -23,10 +23,9 @@ schema_view = get_schema_view(
 )
 
 
-
 urlpatterns = [
     path("admin/", admin.site.urls),
-     ## swagger
+    ## swagger
     path(
         "swagger<str:format>/",
         schema_view.without_ui(cache_timeout=0),
@@ -40,8 +39,6 @@ urlpatterns = [
     path(
         "redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc-v1"
     ),
-    
-
     ## api
     path("api/v1/users/", include("users.urls")),
     path("api/v1/lectures/", include("lectures.urls")),

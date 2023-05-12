@@ -26,7 +26,7 @@ class CartView(APIView):
     def put(self, request):
         cart = numCart.objects.get(user=request.user)
         lectures = request.data.get("lectures", [])
-        
+
         for lecture_id in lectures:
             lecture = get_object_or_404(Lecture, pk=lecture_id)
             if lecture not in cart.lecture.all():
@@ -35,4 +35,3 @@ class CartView(APIView):
                 cart.lecture.remove(lecture)
         serializer = CartSerializer(cart)
         return Response(serializer.data)
-

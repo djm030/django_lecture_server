@@ -13,6 +13,7 @@ from rest_framework.exceptions import ParseError, NotFound
 from lectures.models import Lecture
 from rest_framework import status
 
+
 class UserNameReview(APIView):
     def get(self, request, username):
         try:
@@ -82,10 +83,13 @@ class ReviewDetailView(APIView):
 
         serializer = ReviewSerializer(review)
         return Response(serializer.data)
+
     def put(self, request, lectureId, reviewId):
         user = request.user
         try:
-            review = Review.objects.get(id=reviewId, lecture__LectureId=lectureId, user=user)
+            review = Review.objects.get(
+                id=reviewId, lecture__LectureId=lectureId, user=user
+            )
         except Review.DoesNotExist:
             raise NotFound
 
@@ -100,7 +104,9 @@ class ReviewDetailView(APIView):
     def delete(self, request, lectureId, reviewId):
         user = request.user
         try:
-            review = Review.objects.get(id=reviewId, lecture__LectureId=lectureId, user=user)
+            review = Review.objects.get(
+                id=reviewId, lecture__LectureId=lectureId, user=user
+            )
         except Review.DoesNotExist:
             raise NotFound
 
@@ -117,6 +123,7 @@ class ReplyDetailView(APIView):
 
         serializer = ReplySerializer(reply)
         return Response(serializer.data)
+
     def put(self, request, lectureId, reviewId, replyId):
         user = request.user
         try:

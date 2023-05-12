@@ -14,5 +14,5 @@ urlpatterns = [
     path("@<str:username>", views.InstructorName.as_view()),
     path("mainpage", views.MainPage.as_view()),
     path("testpage", views.addLecture.as_view()),
-    path("errorChange",views.errortest.as_view()),
+    path("errorChange", views.errortest.as_view()),
 ]

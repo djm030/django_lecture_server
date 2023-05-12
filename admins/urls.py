@@ -13,5 +13,5 @@ urlpatterns = [
         views.InstructorApplicationListAPIView.as_view(),
         name="instructor-application-list",
     ),
-    path("application/approval/",views.InstructorApplicationApprovalAPIView.as_view())
+    path("application/approval/", views.InstructorApplicationApprovalAPIView.as_view()),
 ]
