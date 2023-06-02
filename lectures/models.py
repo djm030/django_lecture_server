@@ -21,6 +21,10 @@ from django.dispatch import receiver
 # Create your models here.
 class Lecture(CommonModel):
     class Difficulty(models.TextChoices):
+        BEGINNER = (
+            "beginner",
+            "Beginner",
+        )
         EASY = (
             "easy",
             "Easy",

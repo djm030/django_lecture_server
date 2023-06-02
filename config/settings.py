@@ -154,6 +154,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://crazyform.shop",
     "https://warm-cat-6770f3.netlify.app",
     "https://inspiring-raindrop-c0fb11.netlify.app",
+    "https://unique-puppy-5d03d2.netlify.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -166,6 +167,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://crazyform.shop",
     "https://warm-cat-6770f3.netlify.app/",
     "https://inspiring-raindrop-c0fb11.netlify.app",
+    "https://unique-puppy-5d03d2.netlify.app",
 ]
 
 
@@ -201,7 +203,7 @@ AWS_DEFAULT_ACL = None
 # JWT settings
 REST_USE_JWT = True
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=8),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
@@ -217,6 +219,12 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.UntypedToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
     "JTI_CLAIM": "jti",
+    "AUTH_COOKIE": "refresh_token",
+    "AUTH_COOKIE_DOMAIN": None,
+    "AUTH_COOKIE_SECURE": True,
+    "AUTH_COOKIE_HTTP_ONLY": True,
+    "AUTH_COOKIE_PATH": "/",
+    "AUTH_COOKIE_SAMESITE": "None",
 }
 
 

@@ -352,3 +352,82 @@ class errortest(APIView):
             # 중복된 CalculatedLecture 객체들을 삭제합니다. (하나를 제외한 나머지 객체들을 삭제합니다.)
             calculated_lectures.exclude(pk=calculated_lectures.first().pk).delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class SearchEngine(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        """
+        1. 검색어
+        2. 카테고리
+        3. 난이도
+        4. 정렬
+        """
+
+        ## 검색어
+        try:
+            search_query = request.query_params.get("search", "")
+        except:
+            search_query = ""
+
+        ## 카테고리
+        try:
+            category_query = request.query_params.get("category", "")
+        except:
+            category_query = ""
+        category_list = category_query.split(",")
+
+        ## 난이도
+        try:
+            level_query = request.query_params.get("level", "1,2,3,4")
+        except:
+            level_query = "1,2,3,4"
+        level_list = level_query.split(",")
+        level_dict = {"1": "beginner", "2": "easy", "3": "middle", "4": "hard"}
+        level_list = [level_dict.get(level) for level in level_list]
+
+        ## 정렬
+        try:
+            sort_by_query = request.query_params.get("sort_by", "latest")
+        except:
+            sort_by_query = "latest"
+
+        ## 오름차순 내림차순
+        try:
+            order_query = request.query_params.get("order", "asc")
+        except:
+            order_query = "asc"
+        if order_query == "desc":
+            sort_by_query = "-" + sort_by_query
+
+        ## pagination
+        try:
+            page = request.query_params.get("page", 1)
+        except:
+            page = 1
+        try:
+            page = int(page)
+        except ValueError:
+            page = 1
+
+        # 강의 검색
+        lectures = Lecture.objects.all()
+
+        if search_query:
+            lectures = lectures.filter(lectureTitle__icontains=search_query)
+        if category_list[0]:
+            lectures = lectures.filter(category__in=category_list)
+        if level_list[0]:
+            lectures = lectures.filter(level__in=level_list)
+
+        lectures = lectures.order_by(sort_by_query)
+
+        page_size = 24
+        start = (page - 1) * page_size
+        end = start + page_size
+        total_num = lectures.count()
+        lectures = lectures[start:end]
+        serializer = serializers.LectureListSerializer(lectures, many=True)
+
+        return Response({"data": serializer.data, "totalNum": total_num})

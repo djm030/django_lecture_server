@@ -17,6 +17,13 @@ from . import serializers
 from .models import User, Activite
 import jwt
 import requests
+import boto3
+import os
+import base64
+import io
+from PIL import Image
+from django.core.files.base import ContentFile
+from storages.backends.s3boto3 import S3Boto3Storage
 
 
 # 유저 프로필 관련 view
@@ -42,21 +49,30 @@ class UserProfileView(APIView):
 
     def put(self, request):
         user = request.user
-        print(request.data["avatar"])
-        imagefile = request.FILES.get("avatar")
-        print(imagefile)
+
+        imagefile = request.FILES.get("image")
+
+        # If there's an image file, save it
+        if imagefile is not None:
+            s3_storage = S3Boto3Storage()
+            path = s3_storage.save("images/" + imagefile.name, imagefile)
+            request.data["profileImg"] = s3_storage.url(path)
+            user.profileImg = s3_storage.url(path)
 
         serializer = serializers.OneUserSerializer(
             user,
             data=request.data,
             partial=True,
         )
+
         if serializer.is_valid():
             user = serializer.save()
+            if imagefile is not None:
+                user.save()
             serializer = serializers.OneUserSerializer(user)
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # 비밀번호 변경
@@ -86,7 +102,7 @@ class UsersView(APIView):
             raise exceptions.ParseError("password is required")
 
         serializer = serializers.OneUserSerializer(data=request.data)
-        print(request.data)
+
         if serializer.is_valid():
             user = serializer.save()
             user.set_password(password)
@@ -94,7 +110,6 @@ class UsersView(APIView):
             serializer = serializers.OneUserSerializer(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -130,7 +145,6 @@ class LoginView(APIView):
         )
         if user:
             login(request, user)
-            print(user)
             return Response(status=status.HTTP_200_OK)
         else:
             raise exceptions.ValidationError("username or password is incorrect")
@@ -161,18 +175,43 @@ class JWTokenView(APIView):
         )
 
         if user:
-            token = jwt.encode(
-                {
-                    "id": user.memberId,
-                    "username": user.username,
+            # Serialize user data
+            serializer = serializers.OneUserSerializer(user)
+            # Get JWT tokens
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+
+            data = {
+                "user": serializer.data,
+                "message": "login success",
+                "token": {
+                    "access": access_token,
+                    "refresh": refresh_token,
                 },
-                settings.SECRET_KEY,
-                algorithm="HS256",
+            }
+            res = Response(data, status=status.HTTP_200_OK)
+
+            # Set JWT tokens in cookies
+            res.set_cookie(
+                key="access",
+                value=access_token,
+                secure=True,
+                httponly=True,
+                samesite="None",
             )
-            print(token)
-            return Response({"token": token})
+            res.set_cookie(
+                key="refresh",
+                value=refresh_token,
+                secure=True,
+                httponly=True,
+                samesite="None",
+            )
+
+            return res
+
         else:
-            return exceptions.ValidationError("username or password is incorrect")
+            raise exceptions.ValidationError("username or password is incorrect")
 
     # 강사 update
 
@@ -210,44 +249,9 @@ class ActiviteView(APIView):
         return Response(serializer.data)
 
 
-# 강의 추가 모델
-
-
-class AddCalculateLecturesView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get_calculate_lectures(self, lectureId):
-        try:
-            lecture = Lecture.objects.get(LectureId=lectureId)
-            return CalculatedLecture.objects.get(lecture=lecture)
-        except Lecture.DoesNotExist:
-            raise ValueError
-
-    def get(self, request, lectureId):
-        user = request.user
-        serializer = serializers.UserLedetaileSerializer(user)
-        return Response(serializer.data)
-
-    def put(self, request, lectureId):
-        try:
-            calculated_lecture = self.get_calculate_lectures(lectureId)
-            print(calculated_lecture)
-            user = request.user
-
-            user.calculatedLecture.add(calculated_lecture)
-
-            serializer = serializers.UserLedetaileSerializer(user)
-            print(serializer.data)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except (User.DoesNotExist, ValueError):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
 from watchedlectures.models import WatchedLecture
 
 
-# 유저 프로필 관련 view
 class UsertempProfileView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -278,7 +282,6 @@ class UsertempProfileView(APIView):
 
     def put(self, request):
         user = request.user
-        print(request.data)
         serializer = serializers.OneUserSerializer(
             user,
             data=request.data,
@@ -295,7 +298,6 @@ class UsertempProfileView(APIView):
 class PublicTeacher(APIView):
     def get(self, request, teacher):
         try:
-            print(teacher)
             teacher_obj = User.objects.filter(name=teacher)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -322,7 +324,6 @@ class NaverLogIn(APIView):
                 "state": "test",
                 "redirect_uri": "https://cmgg.store/social/naver",
             }
-            print("noteroor")
             token_response = requests.post(token_request_url, data=token_request_data)
             token_data = token_response.json()
             access_token = token_data.get("access_token")
@@ -337,7 +338,6 @@ class NaverLogIn(APIView):
 
             # Get or create user
             naver_account = profile_data.get("response")
-            print(naver_account)
             user, created = User.objects.get_or_create(
                 username=naver_account.get("email"),
                 defaults={
@@ -362,10 +362,7 @@ class NaverLogIn(APIView):
             data = {
                 "user": serializer.data,
                 "message": "login success",
-                "token": {
-                    "access": access_token,
-                    "refresh": refresh_token,
-                },
+                "token": {"access": access_token, "refresh": refresh_token},
             }
             res = Response(data, status=status.HTTP_200_OK)
 
@@ -389,7 +386,7 @@ class KakaoLogIn(APIView):
                 data={
                     "grant_type": "authorization_code",
                     "client_id": "0ee0a4111ed87512f2f0dfb62ebd7ae5",
-                    "redirect_uri": "https://cmgg.store/social/kakao",
+                    "redirect_uri": "http://127.0.0.1:3000/social/kakao",
                     "code": code,
                 },
             )
@@ -406,14 +403,6 @@ class KakaoLogIn(APIView):
             user_data = user_data.json()
             kakao_account = user_data.get("kakao_account")
             profile = kakao_account.get("profile")
-            print(
-                {
-                    "user_data": user_data,
-                    "kakao_account": kakao_account,
-                    "profile": profile,
-                }
-            )
-            print(user_data.get("id"))
 
             # Get or create user
             user, created = User.objects.get_or_create(
@@ -440,10 +429,7 @@ class KakaoLogIn(APIView):
             data = {
                 "user": serializer.data,
                 "message": "login success",
-                "token": {
-                    "access": access_token,
-                    "refresh": refresh_token,
-                },
+                "token": {"access": access_token, "refresh": refresh_token},
             }
             res = Response(data, status=status.HTTP_200_OK)
 
@@ -454,11 +440,42 @@ class KakaoLogIn(APIView):
             return res
 
         except Exception as e:
-            print(e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class profileTestAPI(APIView):
     def put(self, request):
-        print(request.data)
         return Response(status=status.HTTP_200_OK)
+
+
+from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework.response import Response
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get("refresh")
+
+        if refresh_token is None:
+            raise InvalidToken("No refresh token provided")
+
+        mutable_data = request.data.copy()  # Create a mutable copy
+        mutable_data["refresh"] = refresh_token  # Modify the copy
+
+        try:
+            # Create a new request with the modified data
+            modified_request = request._request
+            modified_request.POST = mutable_data
+            response = super().post(modified_request)  # Pass the modified request
+
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        # Extract the new access token from the response data
+        access_token = response.data.get("access")
+
+        # Set the new access token as a HttpOnly cookie
+        response.set_cookie("access", access_token, httponly=True)
+
+        return response

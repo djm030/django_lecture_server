@@ -100,14 +100,9 @@ class User(AbstractUser, Activite):
     phoneNumber = models.CharField(
         max_length=20,
     )
-    profileImg = models.URLField(
-        max_length=50,
-        null=True,
-        blank=True,
-    )
 
     profileImg = models.URLField(
-        max_length=50,
+        max_length=400,
         null=True,
         blank=True,
     )
